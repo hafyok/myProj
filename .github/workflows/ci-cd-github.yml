@@ -29,6 +29,8 @@ jobs:
       
       - name: docker image build
         run: docker build -t ${{ secrets.DOCKER_USERNAME }}/cast-service ./cast-service
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       
       - name: docker login
         uses: docker/login-action@v3.0.0
