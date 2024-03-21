@@ -1,0 +1,52 @@
+name: ci/cd
+on:
+  push:
+      branches: ["master"]
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Prepare unit tests
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip
+          pip install -r ./movie-service/requirements.txt
+
+      - name: Run unit tests
+        run: |
+          pytest ./movie-service
+  build-docker-image:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: pulling
+        uses: actions/checkout@v3
+
+      - name: docker image build
+        run: docker build -t cr.yandex/${{ secrets.YC_REGISTRY_ID }}/movie-service ./movie-service
+
+      - name: docker login
+        uses: docker/login-action@v3.0.0
+        with:
+          registry: cr.yandex
+          username: json_key
+          password: ${{ secrets.YC_KEYS }}
+      - name: pushing
+        run: docker push cr.yandex/${{ secrets.YC_REGISTRY_ID }}/movie-service:latest
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [build-docker-image]
+    steps:
+    - name: Deploy serverless container
+      uses: yc-actions/yc-sls-container-deploy@v1
+      with:
+        yc-sa-json-credentials: ${{ secrets.YC_KEYS }}
+        container-name: ${{ secrets.YC_NAME }}
+        folder-id: ${{ secrets.YC_FOLDER_ID }}
+        revision-image-url: cr.yandex/${{ secrets.YC_REGISTRY_ID }}/movie-service:latest
+        revision-service-account-id: ${{ secrets.YC_NAME_ID }}
+
