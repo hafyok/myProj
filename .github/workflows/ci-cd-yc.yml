@@ -49,3 +49,6 @@ jobs:
         folder-id: ${{ secrets.YC_FOLDER_ID }}
         revision-image-url: cr.yandex/${{ secrets.YC_REGISTRY_ID }}/movie-service:latest
         revision-service-account-id: ${{ secrets.YC_NAME_ID }}
+
+
+        
